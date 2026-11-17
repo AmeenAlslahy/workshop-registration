@@ -258,7 +258,16 @@ cp .env.example .env
 ```
 
 Open `.env` and set at least `SECRET_KEY` and the database values. `SECRET_KEY` has no
-default, so the application will not start until it is set.
+default, so the application will not start until it is set. Generate a real value instead of
+keeping the placeholder:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+`.env` is listed in `.gitignore`, so Git ignores it; only `.env.example`, which contains
+placeholders, is tracked. Keep it that way: a database password or a Django secret key that
+reaches a public repository must be treated as leaked and rotated.
 
 ### 5. Apply migrations and seed demo data
 
@@ -339,6 +348,19 @@ production bundle compiles.
 
 `localhost:5173` and `127.0.0.1:5173` are already present in `.env.example`. They are only
 needed when the frontend calls the API cross-origin instead of using the Vite proxy.
+
+### Secrets handling
+
+- Settings read every secret from the environment (`django-environ`); nothing is hardcoded.
+  `SECRET_KEY` is required and has no fallback, so a missing value fails at startup instead
+  of silently using an insecure default.
+- `.env`, `.env.*`, and `frontend/.env` are ignored; `.env.example` and
+  `frontend/.env.example` hold placeholders only.
+- `docker-compose.yml` interpolates `DB_PASSWORD` from `.env` and falls back to the
+  `.env.example` placeholder, so no real credential is stored in a tracked file.
+- The repository contains no tokens, private keys, or production credentials. If a real
+  secret is ever committed, rotating it is mandatory; deleting the file in a later commit
+  does not remove it from history.
 
 ### Frontend environment variables
 
