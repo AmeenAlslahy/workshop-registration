@@ -1,0 +1,36 @@
+# Local PostgreSQL for development and tests.
+#
+# Usage (from the repository root):
+#   docker compose up -d --wait   start the database and wait until it is ready
+#   docker compose down           stop the container, keep the data
+#   docker compose down -v        stop the container and delete the volume
+#
+# The credentials are read from the root .env when it exists and otherwise fall
+# back to the same values as .env.example, so this works before or after you
+# create .env. Changing DB_PASSWORD after the volume exists requires
+# `docker compose down -v`, because PostgreSQL only applies the password when
+# it initialises a new data directory.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-workshop_db}
+      POSTGRES_USER: ${DB_USER:-workshop_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-your-db-password}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-workshop_user} -d ${DB_NAME:-workshop_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres_data:

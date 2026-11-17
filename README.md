@@ -94,6 +94,7 @@ translated.
 | --- | --- |
 | API framework | Django 5.2, Django REST Framework 3.16 |
 | Database | PostgreSQL (required) |
+| Local database (optional) | Docker Compose + PostgreSQL 16 |
 | Python dependencies | `django-environ`, `django-cors-headers`, `psycopg2-binary` |
 | Frontend runtime | React 19 |
 | Build tool | Vite 8 |
@@ -114,10 +115,13 @@ real PostgreSQL connection.
 ## Prerequisites
 
 - **Python** 3.10 or newer.
-- **PostgreSQL** 13 or newer, running locally or reachable over the network.
+- **PostgreSQL** 13 or newer, running locally or reachable over the network. Skip a local
+  installation if you use the Docker option in step 2.
+- **Docker** with the Compose plugin (optional, recommended): starts PostgreSQL with a
+  single command.
 - **Node.js** `^20.19.0` or `>=22.12.0` (the Vite 8 engine requirement).
 - **npm** 10 or newer (bundled with the supported Node.js versions).
-- `psql` or pgAdmin to create the database, or an existing database you can use.
+- `psql` or pgAdmin, only if you create the database without Docker.
 - Git, if you are cloning the repository.
 
 Verify the versions:
@@ -148,6 +152,29 @@ If you received the project as an archive, extract it and open a terminal in the
 
 ### 2. Create the PostgreSQL database
 
+Choose one of the two options below. Both create a database that matches `.env.example`,
+and both allow Django to create the temporary test database that `manage.py test` needs.
+
+#### Option A — Docker (recommended)
+
+If Docker is installed, start PostgreSQL with a single command from the repository root:
+
+```bash
+docker compose up -d --wait
+```
+
+The compose file reads `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `DB_PORT` from the root
+`.env` when it exists, and falls back to the same values as `.env.example` otherwise. The
+container defines a health check, so `--wait` returns only after PostgreSQL accepts
+connections. Data is stored in the named volume `postgres_data`, so it survives a container
+restart.
+
+If a local PostgreSQL instance is already using port 5432, stop it or set `DB_PORT=5433`
+in `.env` before starting the container. Django reads the same variable, so both sides stay
+aligned.
+
+#### Option B — an existing PostgreSQL server
+
 Open a superuser session:
 
 ```bash
@@ -160,9 +187,20 @@ or run the same SQL from pgAdmin's Query Tool.
 Run:
 
 ```sql
-CREATE ROLE workshop_user WITH LOGIN PASSWORD 'your-db-password';
+CREATE ROLE workshop_user WITH LOGIN PASSWORD 'your-db-password' CREATEDB;
 CREATE DATABASE workshop_db OWNER workshop_user;
 \q
+```
+
+`CREATEDB` matters: `manage.py test` creates and drops a separate `test_workshop_db`
+beside the development database, so a role without that privilege fails with
+`permission denied to create database`. A role created by the Docker image is a superuser
+and already has it.
+
+If the role already exists without the privilege, grant it instead of recreating the role:
+
+```sql
+ALTER ROLE workshop_user CREATEDB;
 ```
 
 If the role or database already exists, either reuse it and update `.env`, or drop and
@@ -265,14 +303,21 @@ VITE_API_PROXY_TARGET=http://127.0.0.1:8000
 ### 8. Verify the setup (optional)
 
 ```bash
+# API
 curl http://127.0.0.1:8000/api/participants/
-```
-
-You can also run Django's system check:
-
-```bash
 python manage.py check
+
+# Frontend
+cd frontend
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
+
+These are the same checks used before submitting changes. The frontend block starts with
+`cd frontend`, so run it from the repository root. `npm run build` also proves that the
+production bundle compiles.
 
 ---
 
@@ -848,6 +893,26 @@ The role password and `DB_PASSWORD` do not match. Reset it:
 ALTER ROLE workshop_user WITH PASSWORD 'your-db-password';
 ```
 
+If you use Docker and changed `DB_PASSWORD` after the first start, PostgreSQL still has the
+old password: it is applied only when the data directory is initialised. Recreate the
+volume with `docker compose down -v` and start again. That deletes the data in the volume.
+
+### Tests fail with `permission denied to create database`
+
+`manage.py test` creates a temporary `test_workshop_db`, so the role needs `CREATEDB`:
+
+```sql
+ALTER ROLE workshop_user CREATEDB;
+```
+
+Roles created by the Docker image are superusers and do not need this step.
+
+### `docker compose up -d` fails because port 5432 is already allocated
+
+A local PostgreSQL service is already using the port. Stop it, or set `DB_PORT=5433` in
+`.env` and run the command again. Django reads the same variable, so the API and the
+container stay aligned.
+
 ### `psycopg2` installation fails on Windows
 
 `requirements.txt` uses `psycopg2-binary`, which ships pre-built wheels. Make sure you are
@@ -935,6 +1000,7 @@ workshop-registration/
 │   ├── README.md                frontend architecture and trade-offs
 │   ├── package.json
 │   └── vite.config.ts
+├── docker-compose.yml           optional local PostgreSQL (PostgreSQL 16)
 ├── .env.example
 ├── .gitignore
 ├── manage.py
