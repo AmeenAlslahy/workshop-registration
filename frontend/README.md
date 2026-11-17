@@ -154,6 +154,7 @@ src/
 ├── infrastructure/               the only place that knows the wire format
 │   └── api/
 │       ├── apiConfig.ts          base URL + timeout
+│       ├── endpoints.ts          route builders (single source of paths)
 │       ├── httpClient.ts         fetch, JSON, abort, timeout, error normalization
 │       ├── schemas.ts            Zod schemas for every response
 │       ├── mappers.ts            snake_case DTO → camelCase domain model
@@ -240,6 +241,13 @@ labels live in the i18n dictionary, so the same lifecycle works in both language
 | `GET` | `/api/workshops/?participant_id=<id>` | Workshops with availability and history |
 | `POST` | `/api/workshops/<id>/register/` | Register `{ "participant_id": <id> }` |
 | `POST` | `/api/registrations/<id>/cancel/` | Cancel `{ "participant_id": <id> }` |
+
+The paths are built in `src/infrastructure/api/endpoints.ts`, not inside the API modules.
+That keeps a route change to one file and makes the list directly comparable with the table
+above. `httpClient` prepends the base URL, so endpoints stay relative and the proxy or an
+absolute API URL keeps working. The page test asserts the full request URLs
+(`/api/workshops/10/register/`), so a route change that is not applied on both sides fails
+the suite.
 
 Every response is parsed with Zod before it reaches the UI. A shape mismatch becomes an
 `invalid-response` error instead of a runtime crash deep in a component. DRF field errors

@@ -4,6 +4,7 @@ import type {
 } from '@/domain/registration'
 import type { Workshop } from '@/domain/workshop'
 
+import { endpoints } from './endpoints'
 import { mapWorkshop } from './mappers'
 import { requestJson } from './httpClient'
 import {
@@ -28,10 +29,7 @@ export const workshopsApi = {
     participantId: number,
     signal?: AbortSignal,
   ): Promise<Workshop[]> {
-    const query = new URLSearchParams({
-      participant_id: String(participantId),
-    })
-    const payload = await requestJson(`/workshops/?${query.toString()}`, {
+    const payload = await requestJson(endpoints.workshops.list(participantId), {
       signal,
     })
     const dtos = parseApiPayload(workshopListSchema, payload, 'workshop list')
@@ -42,11 +40,14 @@ export const workshopsApi = {
     { workshopId, participantId }: RegisterCommand,
     signal?: AbortSignal,
   ): Promise<RegistrationResult> {
-    const payload = await requestJson(`/workshops/${workshopId}/register/`, {
-      method: 'POST',
-      body: { participant_id: participantId },
-      signal,
-    })
+    const payload = await requestJson(
+      endpoints.workshops.register(workshopId),
+      {
+        method: 'POST',
+        body: { participant_id: participantId },
+        signal,
+      },
+    )
     const dto = parseApiPayload(
       registerResponseSchema,
       payload,
@@ -63,7 +64,7 @@ export const workshopsApi = {
     signal?: AbortSignal,
   ): Promise<CancellationResult> {
     const payload = await requestJson(
-      `/registrations/${registrationId}/cancel/`,
+      endpoints.registrations.cancel(registrationId),
       {
         method: 'POST',
         body: { participant_id: participantId },

@@ -625,7 +625,7 @@ never on the layers above it. `domain` has no React or transport knowledge.
 src/
 ├── app/             composition root, providers, error boundary, query client
 ├── domain/          pure types and registration-lifecycle rules
-├── infrastructure/  fetch client, Zod schemas, DTO mappers, API modules
+├── infrastructure/  endpoints, fetch client, Zod schemas, DTO mappers, API modules
 ├── application/     TanStack Query queries/mutations and cache invalidation
 ├── presentation/    layout, page, features, design-system components, i18n, theme
 ├── shared/          generic hooks and utilities
@@ -992,7 +992,7 @@ workshop-registration/
 │   ├── src/
 │   │   ├── app/                 providers, error boundary, query client
 │   │   ├── domain/              pure types and lifecycle rules
-│   │   ├── infrastructure/      HTTP client, Zod schemas, DTO mappers
+│   │   ├── infrastructure/      endpoints, HTTP client, Zod schemas, DTO mappers
 │   │   ├── application/         TanStack Query hooks and mutations
 │   │   ├── presentation/        layout, pages, features, components, i18n, theme
 │   │   ├── shared/              generic hooks and utilities
