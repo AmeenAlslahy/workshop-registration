@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Browse training-center workshops, check seat availability, and manage registrations."
+    />
+    <meta name="theme-color" content="#1e4d45" />
+    <script>
+      /*
+       * Apply the persisted theme and locale before the first paint so a dark
+       * or Arabic session never flashes the light/LTR defaults. The storage
+       * keys must match src/presentation/theme and src/presentation/i18n.
+       */
+      ;(() => {
+        try {
+          const storedTheme = localStorage.getItem('workshop-studio.theme')
+          const theme =
+            storedTheme === 'light' || storedTheme === 'dark'
+              ? storedTheme
+              : window.matchMedia?.('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+
+          document.documentElement.dataset.theme = theme
+          document.documentElement.style.colorScheme = theme
+
+          const storedLocale = localStorage.getItem('workshop-studio.locale')
+          const locale =
+            storedLocale === 'ar' || storedLocale === 'en'
+              ? storedLocale
+              : 'en'
+
+          document.documentElement.lang = locale
+          document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+        } catch {
+          // Storage can be unavailable; the document defaults remain valid.
+        }
+      })()
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Workshop Studio — Seat reservations</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

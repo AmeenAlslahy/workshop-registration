@@ -1,0 +1,9 @@
+.page {
+  display: grid;
+  gap: 22px;
+}
+
+.workshopSection {
+  display: grid;
+  gap: 18px;
+}

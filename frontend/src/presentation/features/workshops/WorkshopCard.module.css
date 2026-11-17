@@ -1,0 +1,99 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  content: '';
+  background: linear-gradient(90deg, var(--color-brand), var(--color-accent));
+}
+
+.card[data-state='registered']::before {
+  background: var(--color-success);
+}
+
+.card[data-state='full']::before {
+  background: var(--color-danger);
+}
+
+.card[data-state='cancelled']::before {
+  background: var(--color-warning);
+}
+
+.card:hover {
+  border-color: var(--color-line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card[data-full='true'] {
+  background: color-mix(in srgb, var(--color-surface) 78%, var(--color-canvas));
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.heading {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.4vw, 1.7rem);
+  font-weight: 550;
+  letter-spacing: -0.025em;
+  line-height: 1.14;
+}
+
+.description {
+  color: var(--color-ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  color: var(--color-ink-muted);
+  font-size: 0.75rem;
+}
+
+.detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 20px;
+  }
+}
