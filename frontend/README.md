@@ -199,6 +199,10 @@ src/
 - **`shared`** contains generic helpers only. Anything with business meaning belongs in
   `domain`.
 
+The database shape these models mirror is documented with an ERD, a column-level schema
+table, and the registration lifecycle diagram in the root README, under
+[Data model and integrity](../README.md#data-model-and-integrity).
+
 ### Data flow
 
 ```text

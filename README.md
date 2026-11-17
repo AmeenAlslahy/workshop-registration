@@ -493,16 +493,116 @@ by the service transaction and by a `CHECK` constraint.
 
 ## Data model and integrity
 
-### Tables
+### ERD
 
-| Table | Columns | Constraints |
-| --- | --- | --- |
-| `participants` | `id`, `name`, `email`, `created_at` | `email` is unique. |
-| `workshops` | `id`, `title`, `description`, `capacity`, `seats_taken`, `created_at` | `capacity > 0`; `0 <= seats_taken <= capacity`. |
-| `registrations` | `id`, `participant_id`, `workshop_id`, `status`, `created_at`, `cancelled_at` | `status` is `active` or `cancelled`; active rows must have `cancelled_at = NULL`; cancelled rows must have `cancelled_at` set; one active row per participant/workshop. |
+```mermaid
+erDiagram
+    PARTICIPANTS ||--o{ REGISTRATIONS : "holds"
+    WORKSHOPS    ||--o{ REGISTRATIONS : "receives"
+
+    PARTICIPANTS {
+        bigint      id          PK
+        varchar     name
+        varchar     email       UK
+        timestamptz created_at
+    }
+
+    WORKSHOPS {
+        bigint      id          PK
+        varchar     title
+        text        description
+        integer     capacity
+        integer     seats_taken
+        timestamptz created_at
+    }
+
+    REGISTRATIONS {
+        bigint      id             PK
+        bigint      participant_id FK
+        bigint      workshop_id    FK
+        varchar     status
+        timestamptz created_at
+        timestamptz cancelled_at
+    }
+```
+
+One participant takes part in zero or more registrations, and one workshop receives zero or
+more registrations. `REGISTRATIONS` is a rich through-model: it is the only place where
+`status`, `created_at`, and `cancelled_at` live, which is exactly the history the interface
+needs.
 
 Both foreign keys use `on_delete=PROTECT`, so a participant or workshop with registration
-history cannot be deleted by accident.
+history cannot be deleted by accident. The arrows are `||--o{` because a registration cannot
+exist without both parents.
+
+### Physical schema
+
+The same model as PostgreSQL stores it, with the constraint names that `models.py` defines:
+
+| Table | Column | Type | Null | Default | Key / constraint |
+| --- | --- | --- | --- | --- | --- |
+| `participants` | `id` | `bigint` | no | identity | primary key |
+| `participants` | `name` | `varchar(100)` | no | — | |
+| `participants` | `email` | `varchar(254)` | no | — | unique |
+| `participants` | `created_at` | `timestamptz` | no | `auto_now_add` | |
+| `workshops` | `id` | `bigint` | no | identity | primary key |
+| `workshops` | `title` | `varchar(200)` | no | — | |
+| `workshops` | `description` | `text` | no | `''` | |
+| `workshops` | `capacity` | `integer` | no | — | `workshop_capacity_positive`: `capacity > 0` |
+| `workshops` | `seats_taken` | `integer` | no | `0` | `workshop_seats_within_capacity`: `0 <= seats_taken <= capacity` |
+| `workshops` | `created_at` | `timestamptz` | no | `auto_now_add` | |
+| `registrations` | `id` | `bigint` | no | identity | primary key |
+| `registrations` | `participant_id` | `bigint` | no | — | foreign key → `participants.id` (`PROTECT`), indexed |
+| `registrations` | `workshop_id` | `bigint` | no | — | foreign key → `workshops.id` (`PROTECT`), indexed |
+| `registrations` | `status` | `varchar(10)` | no | `'active'` | `active` / `cancelled`, enforced by `choices` and the API, not by a `CHECK` |
+| `registrations` | `created_at` | `timestamptz` | no | `auto_now_add` | |
+| `registrations` | `cancelled_at` | `timestamptz` | yes | `NULL` | `registration_cancelled_at_consistent` |
+
+`timestamptz` is PostgreSQL's `timestamp with time zone`. `USE_TZ` is `True` and `TIME_ZONE`
+is `UTC`, so every timestamp is stored in UTC and localised by the client. The `Default`
+column shows the Django-side value applied on insert (`auto_now_add` is set in Python); only
+the `id` columns have a database default, because they are identity columns.
+
+### Constraints and indexes
+
+| Name | Table | Definition |
+| --- | --- | --- |
+| `participants_pkey` | `participants` | `PRIMARY KEY (id)` |
+| unique on `email` | `participants` | `UNIQUE (email)` |
+| `workshops_pkey` | `workshops` | `PRIMARY KEY (id)` |
+| `workshop_capacity_positive` | `workshops` | `CHECK (capacity > 0)` |
+| `workshop_seats_within_capacity` | `workshops` | `CHECK (seats_taken >= 0 AND seats_taken <= capacity)` |
+| `registrations_pkey` | `registrations` | `PRIMARY KEY (id)` |
+| foreign-key index | `registrations` | `(participant_id)` — used by "my registrations" lookups |
+| foreign-key index | `registrations` | `(workshop_id)` — used by per-workshop queries |
+| `unique_active_registration_per_workshop` | `registrations` | `UNIQUE (participant_id, workshop_id) WHERE status = 'active'` |
+| `registration_cancelled_at_consistent` | `registrations` | `CHECK ((status = 'active' AND cancelled_at IS NULL) OR (status = 'cancelled' AND cancelled_at IS NOT NULL))` |
+
+The four `Meta.constraints` names are written by hand in `models.py`, so they are stable and
+appear verbatim in database errors. Primary keys follow PostgreSQL's `<table>_pkey`
+convention; Django adds a digest suffix to the unique constraint and the foreign-key indexes
+(`participants_email_<digest>_uniq`), so they are listed here by definition instead of by a
+guessed name.
+
+One gap is deliberate: the database constrains how `status` and `cancelled_at` relate to each
+other, but not the set of allowed `status` strings — `choices` is validated by the serializer
+only. A `CHECK (status IN ('active', 'cancelled'))` would close that gap and is a cheap
+hardening step for a production version.
+
+### Registration lifecycle
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> active : register / INSERT row
+    active --> cancelled : cancel / set cancelled_at
+    active --> [*] : row stays active
+    cancelled --> [*] : row kept as history
+```
+
+The cancelled row is kept forever. Registering again after a cancellation inserts a **new**
+`active` row, which is why the partial index filters on `status = 'active'` instead of
+covering every row of the pair.
 
 ### The partial unique index
 
@@ -522,15 +622,6 @@ On PostgreSQL this becomes a partial unique index. Cancelled rows are excluded, 
 
 A plain `UNIQUE(participant_id, workshop_id)` would be incorrect because it would forbid
 ever registering for that workshop again.
-
-### Relationship
-
-```text
-Participant 1 ──── * Registration * ──── 1 Workshop
-```
-
-`Registration` is a rich through-model: it carries `status`, `created_at`, and
-`cancelled_at`, which is exactly the history the UI needs.
 
 ---
 
