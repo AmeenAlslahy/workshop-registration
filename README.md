@@ -743,17 +743,26 @@ constraints; adding a parallel-session test would be the next step for a product
 
 ## Approximate time spent
 
-| Area | Time |
-| --- | --- |
-| Backend modelling, services, validation | 6–7 hours |
-| Backend tests and rollback verification | 2–3 hours |
-| Frontend architecture and API integration | 6–7 hours |
-| Bilingual UI, RTL, light/dark themes, responsive polish | 4–5 hours |
-| Documentation and final verification | 2 hours |
-| **Total** | **~20–24 hours** |
+| Phase | Work | Time |
+| --- | --- | --- |
+| Learning | React 19, hooks, TanStack Query, Zod, Vitest and Testing Library | 7 h |
+| Analysis | Requirements, data model, constraints, API contract, UI states | 3 h |
+| Implementation | Backend models, services, validation | 5 h |
+| Implementation | Frontend architecture and API integration | 4 h |
+| Implementation | Bilingual UI, RTL, light/dark themes, responsive polish | 1 h |
+| Implementation | Automated tests: 16 backend + 20 frontend | 2 h |
+| Verification | Docker setup, documentation, final checks | 2 h |
+| **Total** | | **24 h** |
 
-The range reflects work spread across several sessions; the final verification pass
-(typecheck, lint, 20 frontend tests, 16 backend tests, production build) is included.
+Split: **7 hours learning the stack**, **3 hours of analysis**, **12 hours of
+implementation**, and **2 hours of verification and documentation**.
+
+This was my first project with React 19 and TanStack Query, so the learning time is counted
+here instead of being hidden. AI assistance was used for scaffolding and review; its effect
+is already reflected in the hours above rather than added on top of them.
+
+The verification block includes `python manage.py test` (16 tests), `npm test` (20 tests),
+`npm run typecheck`, `npm run lint`, `npm run build`, and the screenshot pass.
 
 ---
 
