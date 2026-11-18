@@ -2,6 +2,7 @@ import { ApiError } from '@/domain/apiError'
 
 import { API_BASE_URL, REQUEST_TIMEOUT_MS } from './apiConfig'
 import { toApiError } from './errorMapper'
+import { getRequestLocale } from './locale'
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -69,6 +70,7 @@ export async function requestJson(
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    'Accept-Language': getRequestLocale(),
     ...options.headers,
   }
 

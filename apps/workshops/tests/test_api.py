@@ -135,3 +135,53 @@ class WorkshopAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertIn("already cancelled", response.data['error'])
+
+    def test_unknown_participant_message_follows_accept_language(self):
+        response = self.client.get(
+            f"{self.list_url}?participant_id=999999",
+            HTTP_ACCEPT_LANGUAGE='ar',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'لم يتم العثور على المشارك.')
+        self.assertIn('Accept-Language', response['Vary'])
+
+    def test_register_success_message_follows_accept_language(self):
+        response = self.client.post(
+            self.register_url,
+            {'participant_id': self.participant.id},
+            format='json',
+            HTTP_ACCEPT_LANGUAGE='ar',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['message'], 'تم التسجيل بنجاح')
+
+    def test_workshop_full_message_follows_accept_language(self):
+        p2 = Participant.objects.create(name="Sara", email="sara@test.com")
+        self.client.post(
+            self.register_url,
+            {'participant_id': self.participant.id},
+            format='json',
+        )
+
+        response = self.client.post(
+            self.register_url,
+            {'participant_id': p2.id},
+            format='json',
+            HTTP_ACCEPT_LANGUAGE='ar',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['error'], 'الورشة ممتلئة.')
+
+    def test_validation_errors_follow_accept_language(self):
+        response = self.client.post(
+            self.register_url,
+            {},
+            format='json',
+            HTTP_ACCEPT_LANGUAGE='ar',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['participant_id'][0], 'هذا الحقل مطلوب.')

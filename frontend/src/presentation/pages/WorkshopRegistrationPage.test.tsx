@@ -128,7 +128,7 @@ describe('WorkshopRegistrationPage', () => {
       await screen.findByRole('button', { name: 'Cancel registration' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Seat reserved. Your registration is active.'),
+      screen.getByText('Registration successful'),
     ).toBeInTheDocument()
     expect(screen.getByText('Registered')).toBeInTheDocument()
 
@@ -136,6 +136,9 @@ describe('WorkshopRegistrationPage', () => {
       String(input).includes('/register/'),
     )
     expect(registerCall).toBeDefined()
+    expect(registerCall?.[1]?.headers).toMatchObject({
+      'Accept-Language': 'en',
+    })
     expect(JSON.parse(String(registerCall?.[1]?.body))).toEqual({
       participant_id: 1,
     })

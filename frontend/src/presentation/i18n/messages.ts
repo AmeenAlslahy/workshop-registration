@@ -70,9 +70,6 @@ export const en = {
   'page.workshopsEmptyBody':
     'The training center has not published any workshops yet. Seed the database and refresh.',
   'page.workshopsEmptyAction': 'Refresh workshops',
-  'page.feedback.registered': 'Seat reserved. Your registration is active.',
-  'page.feedback.cancelled':
-    'Registration cancelled. The seat is available again.',
 
   'notice.dismiss': 'Dismiss message',
   'a11y.loadingPage': 'Loading page',
@@ -87,8 +84,6 @@ export const en = {
     'Cannot reach the workshop service. Make sure the Django server is running.',
   'error.timeout': 'The request took too long. Please try again.',
   'error.invalidResponse': 'The server returned an unexpected response.',
-  'error.server':
-    'The server could not complete the request. Please try again.',
   'error.unexpected': 'Something went wrong. Please try again.',
 
   'footer.serverTruth':
@@ -166,8 +161,6 @@ export const ar: Record<MessageKey, string> = {
   'page.workshopsEmptyBody':
     'لم ينشر مركز التدريب أي ورش بعد. أضف البيانات التجريبية ثم حدّث الصفحة.',
   'page.workshopsEmptyAction': 'تحديث الورش',
-  'page.feedback.registered': 'تم حجز المقعد. تسجيلك الآن فعّال.',
-  'page.feedback.cancelled': 'تم إلغاء التسجيل. أصبح المقعد متاحًا من جديد.',
 
   'notice.dismiss': 'إغلاق الرسالة',
   'a11y.loadingPage': 'جارٍ تحميل الصفحة',
@@ -182,7 +175,6 @@ export const ar: Record<MessageKey, string> = {
     'تعذر الوصول إلى خدمة الورش. تأكد من تشغيل خادم Django.',
   'error.timeout': 'استغرق الطلب وقتًا طويلًا. حاول مرة أخرى.',
   'error.invalidResponse': 'أعاد الخادم استجابة غير متوقعة.',
-  'error.server': 'تعذر على الخادم إكمال الطلب. حاول مرة أخرى.',
   'error.unexpected': 'حدث خطأ ما. حاول مرة أخرى.',
 
   'footer.serverTruth': 'تُؤكَّد السعة من الخادم بعد كل إجراء.',

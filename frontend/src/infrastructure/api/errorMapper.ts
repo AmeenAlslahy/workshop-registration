@@ -1,24 +1,7 @@
 import { ApiError, type FieldErrors } from '@/domain/apiError'
 
-const FIELD_LABELS: Readonly<Record<string, string>> = {
-  participant_id: 'Participant',
-  non_field_errors: 'Request',
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function labelForField(field: string): string {
-  const known = FIELD_LABELS[field]
-  if (known) {
-    return known
-  }
-
-  const words = field.replace(/_/g, ' ').trim()
-  return words.length > 0
-    ? `${words.charAt(0).toUpperCase()}${words.slice(1)}`
-    : 'Request'
 }
 
 function collectFieldErrors(payload: unknown): FieldErrors | null {
@@ -74,16 +57,8 @@ function findServerMessage(payload: unknown): string | null {
     return null
   }
 
-  const firstEntry = Object.entries(fieldErrors)[0]
-  if (!firstEntry) {
-    return null
-  }
-
-  const [field, messages] = firstEntry
-  const firstMessage = messages[0]
-  return firstMessage
-    ? `${labelForField(field)}: ${firstMessage}`
-    : null
+  const messages = Object.values(fieldErrors)[0]
+  return messages?.[0] ?? null
 }
 
 function defaultMessageForStatus(status: number): string {

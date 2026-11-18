@@ -4,8 +4,8 @@ import type { Translate } from './i18nContext'
 
 /**
  * Presentation-level error copy. Transport errors get a translated fallback;
- * HTTP errors keep the server's specific message (for example "Workshop is
- * full.") because it is more useful than a generic status label.
+ * HTTP errors keep the server's message because the backend localizes it using
+ * the same Accept-Language value the transport sent.
  */
 export function describeError(error: unknown, t: Translate): string {
   if (!isApiError(error)) {
@@ -24,9 +24,7 @@ export function describeError(error: unknown, t: Translate): string {
     case 'invalid-response':
       return t('error.invalidResponse')
     case 'http':
-      return error.status !== null && error.status >= 500
-        ? t('error.server')
-        : error.message
+      return error.message
     case 'aborted':
       return t('error.unexpected')
   }

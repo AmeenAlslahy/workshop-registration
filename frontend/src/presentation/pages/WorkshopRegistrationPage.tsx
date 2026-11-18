@@ -112,11 +112,11 @@ export function WorkshopRegistrationPage() {
     registerMutation.mutate(
       { workshopId },
       {
-        onSuccess: () => {
+        onSuccess: (result) => {
           setFeedback({
             tone: 'success',
             workshopId,
-            message: t('page.feedback.registered'),
+            message: result.message,
           })
         },
         onError: (error) => {
@@ -143,11 +143,11 @@ export function WorkshopRegistrationPage() {
     cancelMutation.mutate(
       { workshopId, registrationId },
       {
-        onSuccess: () => {
+        onSuccess: (result) => {
           setFeedback({
             tone: 'success',
             workshopId,
-            message: t('page.feedback.cancelled'),
+            message: result.message,
           })
         },
         onError: (error) => {

@@ -258,7 +258,8 @@ Every response is parsed with Zod before it reaches the UI. A shape mismatch bec
 (`{"participant_id": ["..."]}`), `detail` errors, and `{"error": "..."}` responses are all
 normalized into one `ApiError` with a status, a readable message, and optional field errors.
 `409` and `404` responses also trigger a refetch so stale availability is corrected
-immediately.
+immediately. The request carries `Accept-Language` from `<html lang>`, so both success and
+error messages come back localized instead of being translated in the client.
 
 Timeouts (12 s), network failures, server errors, and aborts are handled once in
 `httpClient`, so no feature needs its own error logic. TanStack Query retries a failed
@@ -294,9 +295,11 @@ falls back to the first participant and persists the choice under
 - **Arabic typography.** `html[lang="ar"]` switches to IBM Plex Sans Arabic / Noto Kufi
   Arabic, increases line height, removes letter spacing, and disables italic display text.
   Fonts are loaded in `index.html`; offline machines fall back to system fonts.
-- **Scope note.** API error messages for `4xx` responses are shown as returned by Django
-  (English) because they are more specific than a generic translated status message.
-  Transport failures, timeouts, invalid responses, and the UI shell are fully translated.
+- **Server messages are shown verbatim.** `httpClient` sends the active locale as
+  `Accept-Language` (read from `<html lang>`), so Django returns success messages, business
+  errors (`409`), and validation errors (`400`) already localized. The UI never translates
+  them again. Transport failures, timeouts, invalid responses, and the UI shell are
+  translated locally.
 
 Adding a language means adding one dictionary object and one entry in `messages`. The type
 system then lists every missing key.
@@ -400,10 +403,7 @@ What is not covered automatically:
 ## Known limitations
 
 - **Workshop content is not translated.** Titles and descriptions come from the backend in
-  one language. The UI shell, labels, errors, and formatting are bilingual.
-- **`4xx` server messages are English.** They are displayed as returned by DRF because they
-  are more precise than a generic status message. Translating them would require error
-  codes from the API.
+  one language. The UI shell, labels, server messages, and formatting are bilingual.
 - **No authentication.** The participant is chosen in the UI and stored locally; the API
   trusts the supplied `participant_id`.
 - **No offline mode.** Fonts and the API require a network connection. Font fallbacks keep

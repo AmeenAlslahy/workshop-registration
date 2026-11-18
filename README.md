@@ -490,6 +490,30 @@ The `curl` examples use bash syntax. On Windows, use `curl.exe` from PowerShell 
 in Git Bash; PowerShell's `curl` alias points to `Invoke-WebRequest` and does not accept the
 same flags.
 
+### Message language
+
+Every success and business-error message is localized by the backend. The client sends the
+active interface language in `Accept-Language` (`en` or `ar`), and the response uses it:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/workshops/1/register/ \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: ar" \
+  -d "{\"participant_id\": 1}"
+```
+
+```json
+{
+  "message": "تم التسجيل بنجاح",
+  "registration_id": 1
+}
+```
+
+The catalog lives in `config/localization.py`. A missing or unsupported header falls back to
+English. `LocaleMiddleware` applies the same header to DRF validation messages (`400`), and
+Django adds `Vary: Accept-Language` so caches keep the two representations apart. The frontend
+does not translate server messages; it displays them verbatim.
+
 ---
 
 ## Business rules
@@ -782,8 +806,10 @@ documented in [`frontend/README.md`](frontend/README.md).
   refresh errors, and per-card success/error notices are implemented.
 - **Accessibility.** Semantic headings, labelled controls, `aria-live` notices,
   `progressbar` values, visible focus styles, and reduced-motion support.
-- **Bilingual and bidirectional.** Arabic and English copy live in one typed dictionary.
-  The selected locale updates `<html lang>` and `<html dir>`; the choice is persisted.
+- **Bilingual and bidirectional.** Arabic and English UI copy live in one typed dictionary,
+  and server messages arrive already localized because every request carries
+  `Accept-Language`. The selected locale updates `<html lang>` and `<html dir>`; the choice is
+  persisted.
 - **Themes.** Light and dark tokens share the same component CSS. The selected theme is
   persisted and defaults to the operating-system preference.
 
@@ -791,7 +817,7 @@ documented in [`frontend/README.md`](frontend/README.md).
 
 ## Tests
 
-### Backend — 16 tests
+### Backend — 20 tests
 
 ```bash
 python manage.py test apps.workshops.tests
@@ -799,7 +825,7 @@ python manage.py test apps.workshops.tests
 
 | File | Coverage |
 | --- | --- |
-| `apps/workshops/tests/test_api.py` | Missing/invalid/unknown participant IDs, listing, successful registration, duplicate registration, full workshop, cancellation, repeat cancellation. |
+| `apps/workshops/tests/test_api.py` | Missing/invalid/unknown participant IDs, listing, successful registration, duplicate registration, full workshop, cancellation, repeat cancellation, English and Arabic messages. |
 | `apps/workshops/tests/test_services.py` | Duplicate active registration, repeated register/cancel cycles, repeated cancellation, full capacity, inconsistent seat accounting. |
 | `apps/workshops/tests/test_services.py::RollbackTests` | Real database rollback when registration creation fails. |
 
@@ -863,7 +889,7 @@ constraints; adding a parallel-session test would be the next step for a product
 | Implementation | Backend models, services, validation | 5 h |
 | Implementation | Frontend architecture and API integration | 4 h |
 | Implementation | Bilingual UI, RTL, light/dark themes, responsive polish | 1 h |
-| Implementation | Automated tests: 16 backend + 20 frontend | 2 h |
+| Implementation | Automated tests: 20 backend + 20 frontend | 2 h |
 | Verification | Docker setup, documentation, final checks | 2 h |
 | **Total** | | **24 h** |
 
@@ -874,7 +900,7 @@ This was my first project with React 19 and TanStack Query, so the learning time
 here instead of being hidden. AI assistance was used for scaffolding and review; its effect
 is already reflected in the hours above rather than added on top of them.
 
-The verification block includes `python manage.py test` (16 tests), `npm test` (20 tests),
+The verification block includes `python manage.py test` (20 tests), `npm test` (20 tests),
 `npm run typecheck`, `npm run lint`, `npm run build`, and the screenshot pass.
 
 ---

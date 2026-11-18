@@ -1,8 +1,11 @@
+import logging
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Prefetch
 from apps.participants.models import Participant
+from config.localization import api_message
 from .models import Workshop, Registration
 from .serializers import (
     WorkshopSerializer,
@@ -11,9 +14,10 @@ from .serializers import (
     ParticipantIdQuerySerializer,
 )
 from .services import register_participant, cancel_registration
-from .exceptions import (
-    WorkshopFullError, AlreadyRegisteredError, AlreadyCancelledError, DataInconsistencyError
-)
+from .exceptions import WorkshopFullError, AlreadyRegisteredError, AlreadyCancelledError
+
+logger = logging.getLogger(__name__)
+
 
 class WorkshopListView(APIView):
     def get(self, request):
@@ -25,7 +29,7 @@ class WorkshopListView(APIView):
 
         if not Participant.objects.filter(pk=participant_id).exists():
             return Response(
-                {"error": "Participant not found."},
+                {"error": api_message(request, 'error.participant_not_found')},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -33,11 +37,11 @@ class WorkshopListView(APIView):
         registrations_qs = Registration.objects.filter(
             participant_id=participant_id
         ).order_by('-created_at')
-        
+
         workshops = Workshop.objects.prefetch_related(
             Prefetch('registrations', queryset=registrations_qs, to_attr='participant_registrations')
         ).all()
-        
+
         serializer = WorkshopSerializer(workshops, many=True)
         return Response(serializer.data)
 
@@ -47,29 +51,47 @@ class RegisterView(APIView):
         serializer = RegisterActionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
         participant_id = serializer.validated_data['participant_id']
 
         if not Participant.objects.filter(pk=participant_id).exists():
             return Response(
-                {"error": "Participant not found."},
+                {"error": api_message(request, 'error.participant_not_found')},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         try:
             registration = register_participant(participant_id, workshop_id)
-            return Response(
-                {"message": "Registration successful", "registration_id": registration.id},
-                status=status.HTTP_201_CREATED
-            )
         except Workshop.DoesNotExist:
-            return Response({"error": "Workshop not found."}, status=status.HTTP_404_NOT_FOUND)
-        except (AlreadyRegisteredError, WorkshopFullError) as e:
+            return Response(
+                {"error": api_message(request, 'error.workshop_not_found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except (AlreadyRegisteredError, WorkshopFullError) as exc:
             # 409 Conflict: الطلب يتعارض مع الحالة الحالية للمورد
-            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
-        except Exception as e:
+            return Response(
+                {"error": api_message(request, exc.code)},
+                status=status.HTTP_409_CONFLICT
+            )
+        except Exception:
             # أي خطأ آخر (مثل DataInconsistencyError) يُعتبر خطأ في الخادم
-            return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception(
+                'Unexpected error while registering participant %s for workshop %s',
+                participant_id,
+                workshop_id,
+            )
+            return Response(
+                {"error": api_message(request, 'error.internal')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {
+                "message": api_message(request, 'success.registration'),
+                "registration_id": registration.id,
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
 class CancelView(APIView):
@@ -77,15 +99,33 @@ class CancelView(APIView):
         serializer = CancelActionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
         participant_id = serializer.validated_data['participant_id']
-        
+
         try:
             cancel_registration(participant_id, registration_id)
-            return Response({"message": "Registration cancelled"}, status=status.HTTP_200_OK)
         except Registration.DoesNotExist:
-            return Response({"error": "Registration not found."}, status=status.HTTP_404_NOT_FOUND)
-        except AlreadyCancelledError as e:
-            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+            return Response(
+                {"error": api_message(request, 'error.registration_not_found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except AlreadyCancelledError as exc:
+            return Response(
+                {"error": api_message(request, exc.code)},
+                status=status.HTTP_409_CONFLICT
+            )
         except Exception:
-            return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception(
+                'Unexpected error while cancelling registration %s for participant %s',
+                registration_id,
+                participant_id,
+            )
+            return Response(
+                {"error": api_message(request, 'error.internal')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {"message": api_message(request, 'success.cancellation')},
+            status=status.HTTP_200_OK
+        )

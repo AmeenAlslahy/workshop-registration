@@ -16,7 +16,7 @@ describe('toApiError', () => {
       participant_id: ['This field is required.'],
     })
 
-    expect(error.message).toBe('Participant: This field is required.')
+    expect(error.message).toBe('This field is required.')
     expect(error.fieldErrors).toEqual({
       participant_id: ['This field is required.'],
     })
