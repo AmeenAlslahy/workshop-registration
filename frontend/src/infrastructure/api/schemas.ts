@@ -37,8 +37,6 @@ const cancelResponseSchema = z.object({
 
 export type ParticipantDto = z.infer<typeof participantSchema>
 export type WorkshopDto = z.infer<typeof workshopSchema>
-export type RegisterResponseDto = z.infer<typeof registerResponseSchema>
-export type CancelResponseDto = z.infer<typeof cancelResponseSchema>
 
 export const participantListSchema = z.array(participantSchema)
 export const workshopListSchema = z.array(workshopSchema)
