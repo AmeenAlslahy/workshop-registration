@@ -28,3 +28,4 @@ export const endpoints = {
       `/registrations/${registrationId}/cancel/`,
   },
 }
+
