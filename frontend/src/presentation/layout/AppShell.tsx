@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
-
-import { BrandMark } from '@/presentation/components/BrandMark'
+import { BrandMark } from '@/presentation/components/BrandMark/BrandMark'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 
 import { HeaderControls } from './HeaderControls'

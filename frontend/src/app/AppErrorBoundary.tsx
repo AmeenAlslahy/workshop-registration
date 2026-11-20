@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
-import { Button } from '@/presentation/components/Button'
-import { StatePanel } from '@/presentation/components/StatePanel'
+import { Button } from '@/presentation/components/Button/Button'
+import { StatePanel } from '@/presentation/components/StatePanel/StatePanel'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 
 import styles from './AppErrorBoundary.module.css'

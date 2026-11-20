@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 import { cx } from '@/shared/utils/classNames'
 
-import { Spinner } from './Spinner'
+import { Spinner } from '../Spinner/Spinner'
 import styles from './Button.module.css'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'

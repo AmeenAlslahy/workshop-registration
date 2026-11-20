@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { cx } from '@/shared/utils/classNames'
 
-import { Icon, type IconName } from './Icon'
+import { Icon, type IconName } from '../Icon/Icon'
 import styles from './StatePanel.module.css'
 
 interface StatePanelProps {

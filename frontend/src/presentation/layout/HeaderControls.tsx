@@ -1,4 +1,4 @@
-import { Icon } from '@/presentation/components/Icon'
+import { Icon } from '@/presentation/components/Icon/Icon'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 import { useTheme } from '@/presentation/theme/themeContext'
 

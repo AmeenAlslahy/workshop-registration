@@ -1,10 +1,10 @@
 import type { Workshop } from '@/domain/workshop'
 import type { WorkshopState, WorkshopViewState } from '@/domain/workshopState'
-import { Badge } from '@/presentation/components/Badge'
-import { Button } from '@/presentation/components/Button'
-import { CapacityMeter } from '@/presentation/components/CapacityMeter'
-import { Icon } from '@/presentation/components/Icon'
-import { InlineNotice } from '@/presentation/components/InlineNotice'
+import { Badge } from '@/presentation/components/Badge/Badge'
+import { Button } from '@/presentation/components/Button/Button'
+import { CapacityMeter } from '@/presentation/components/CapacityMeter/CapacityMeter'
+import { Icon } from '@/presentation/components/Icon/Icon'
+import { InlineNotice } from '@/presentation/components/InlineNotice/InlineNotice'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 import type { MessageKey } from '@/presentation/i18n/messages'
 import { formatDateTime } from '@/shared/utils/date'
@@ -24,6 +24,7 @@ interface WorkshopCardProps {
   onDismissFeedback: () => void
 }
 
+// . خريطة حالات الورشة والترجمة
 const statusKeyByState: Record<WorkshopState, MessageKey> = {
   registered: 'card.status.registered',
   full: 'card.status.full',
@@ -48,6 +49,7 @@ function getActionKey(
     : 'card.action.register'
 }
 
+// تحديد النص أثناء تنفيذ العملية
 function getPendingKey(
   state: WorkshopState,
   pendingType: PendingAction['type'] | null,
@@ -72,6 +74,7 @@ export function WorkshopCard({
   onDismissFeedback,
 }: WorkshopCardProps) {
   const { locale, t } = useI18n()
+  // لمعرفة العملية التي يجري تنفيذها حالياً، وعلى أي ورشة
   const pendingHere = pendingAction?.workshopId === workshop.id
   const pendingType = pendingHere ? pendingAction.type : null
   const feedbackId = `workshop-${workshop.id}-feedback`

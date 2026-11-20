@@ -1,26 +1,26 @@
 import { useEffect, useState } from 'react'
 
-import { isApiError } from '@/domain/apiError'
-import { getWorkshopViewState } from '@/domain/workshopState'
 import { useCancelRegistration } from '@/application/mutations/useCancelRegistration'
 import { useRegisterForWorkshop } from '@/application/mutations/useRegisterForWorkshop'
 import { useParticipantsQuery } from '@/application/queries/useParticipants'
 import { useWorkshopsQuery } from '@/application/queries/useWorkshops'
-import { Button } from '@/presentation/components/Button'
-import { Icon } from '@/presentation/components/Icon'
-import { InlineNotice } from '@/presentation/components/InlineNotice'
+import { isApiError } from '@/domain/apiError'
+import { getWorkshopViewState } from '@/domain/workshopState'
+import { Button } from '@/presentation/components/Button/Button'
+import { Icon } from '@/presentation/components/Icon/Icon'
+import { InlineNotice } from '@/presentation/components/InlineNotice/InlineNotice'
 import {
   PageSkeleton,
   WorkshopGridSkeleton,
-} from '@/presentation/components/Skeleton'
-import { StatePanel } from '@/presentation/components/StatePanel'
+} from '@/presentation/components/Skeleton/Skeleton'
+import { StatePanel } from '@/presentation/components/StatePanel/StatePanel'
 import { ParticipantSelector } from '@/presentation/features/participants/ParticipantSelector'
 import { SessionSummary } from '@/presentation/features/workshops/SessionSummary'
-import { WorkshopGrid } from '@/presentation/features/workshops/WorkshopGrid'
 import type {
   ActionFeedback,
   PendingAction,
 } from '@/presentation/features/workshops/types'
+import { WorkshopGrid } from '@/presentation/features/workshops/WorkshopGrid'
 import { describeError } from '@/presentation/i18n/describeError'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 import { AppShell } from '@/presentation/layout/AppShell'
@@ -30,16 +30,20 @@ import { useStoredParticipantId } from '@/shared/hooks/useStoredParticipantId'
 import styles from './WorkshopRegistrationPage.module.css'
 
 export function WorkshopRegistrationPage() {
+  // الترجمه
   const { t } = useI18n()
+  // جلب بيانات المشاركين
   const participantsQuery = useParticipantsQuery()
   const [storedParticipantId, setStoredParticipantId] = useStoredParticipantId()
   const [feedback, setFeedback] = useState<ActionFeedback | null>(null)
-
+  // List og Paticipant
   const participants = participantsQuery.data ?? []
+
   const selectedParticipant =
     participants.find((participant) => participant.id === storedParticipantId) ??
     participants[0] ??
     null
+
   const participantId = selectedParticipant?.id ?? null
 
   const workshopsQuery = useWorkshopsQuery(participantId)
@@ -75,11 +79,14 @@ export function WorkshopRegistrationPage() {
     workshop,
     state: getWorkshopViewState(workshop),
   }))
+
+
   const openWorkshops = items.filter((item) => !item.state.isFull).length
   const availableSeats = items.reduce(
     (total, item) => total + item.state.availableSeats,
     0,
   )
+
   const totalSeats = workshops.reduce(
     (total, workshop) => total + workshop.capacity,
     0,

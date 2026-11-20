@@ -1,7 +1,7 @@
 import { cx } from '@/shared/utils/classNames'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 
-import { Icon } from './Icon'
+import { Icon } from '../Icon/Icon'
 import styles from './InlineNotice.module.css'
 
 export type NoticeTone = 'success' | 'error' | 'info'

@@ -1,5 +1,5 @@
-import { InlineNotice } from '@/presentation/components/InlineNotice'
-import { Spinner } from '@/presentation/components/Spinner'
+import { InlineNotice } from '@/presentation/components/InlineNotice/InlineNotice'
+import { Spinner } from '@/presentation/components/Spinner/Spinner'
 import { describeError } from '@/presentation/i18n/describeError'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 

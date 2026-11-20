@@ -1,5 +1,5 @@
 import type { Participant } from '@/domain/participant'
-import { Icon } from '@/presentation/components/Icon'
+import { Icon } from '@/presentation/components/Icon/Icon'
 import { useI18n } from '@/presentation/i18n/i18nContext'
 import { getInitials } from '@/shared/utils/text'
 
