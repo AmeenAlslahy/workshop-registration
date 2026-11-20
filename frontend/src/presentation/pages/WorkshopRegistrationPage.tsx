@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { useCancelRegistration } from '@/application/mutations/useCancelRegistration'
 import { useRegisterForWorkshop } from '@/application/mutations/useRegisterForWorkshop'
@@ -30,15 +30,16 @@ import { useStoredParticipantId } from '@/shared/hooks/useStoredParticipantId'
 import styles from './WorkshopRegistrationPage.module.css'
 
 export function WorkshopRegistrationPage() {
-  // الترجمه
   const { t } = useI18n()
-  // جلب بيانات المشاركين
+
   const participantsQuery = useParticipantsQuery()
   const [storedParticipantId, setStoredParticipantId] = useStoredParticipantId()
   const [feedback, setFeedback] = useState<ActionFeedback | null>(null)
-  // List og Paticipant
+
   const participants = participantsQuery.data ?? []
 
+  // An explicit choice is stored; the fallback stays derived so no effect is
+  // needed to keep state and storage in sync.
   const selectedParticipant =
     participants.find((participant) => participant.id === storedParticipantId) ??
     participants[0] ??
@@ -49,15 +50,6 @@ export function WorkshopRegistrationPage() {
   const workshopsQuery = useWorkshopsQuery(participantId)
   const registerMutation = useRegisterForWorkshop(participantId)
   const cancelMutation = useCancelRegistration(participantId)
-
-  useEffect(() => {
-    if (
-      selectedParticipant &&
-      selectedParticipant.id !== storedParticipantId
-    ) {
-      setStoredParticipantId(selectedParticipant.id)
-    }
-  }, [selectedParticipant, storedParticipantId, setStoredParticipantId])
 
   const isBusy = registerMutation.isPending || cancelMutation.isPending
 
@@ -79,7 +71,6 @@ export function WorkshopRegistrationPage() {
     workshop,
     state: getWorkshopViewState(workshop),
   }))
-
 
   const openWorkshops = items.filter((item) => !item.state.isFull).length
   const availableSeats = items.reduce(
@@ -110,35 +101,32 @@ export function WorkshopRegistrationPage() {
     setFeedback(null)
   }
 
+  // Both mutations report the same way, so the callbacks live in one place and
+  // each handler only supplies its own variables.
+  const actionCallbacks = (workshopId: number) => ({
+    onSuccess: (result: { message: string }) => {
+      setFeedback({ tone: 'success', workshopId, message: result.message })
+    },
+    onError: (error: unknown) => {
+      setFeedback({
+        tone: 'error',
+        workshopId,
+        message: describeError(error, t),
+      })
+
+      if (isApiError(error) && (error.isConflict || error.isNotFound)) {
+        void workshopsQuery.refetch()
+      }
+    },
+  })
+
   const handleRegister = (workshopId: number) => {
     if (isBusy) {
       return
     }
 
     setFeedback(null)
-    registerMutation.mutate(
-      { workshopId },
-      {
-        onSuccess: (result) => {
-          setFeedback({
-            tone: 'success',
-            workshopId,
-            message: result.message,
-          })
-        },
-        onError: (error) => {
-          setFeedback({
-            tone: 'error',
-            workshopId,
-            message: describeError(error, t),
-          })
-
-          if (isApiError(error) && (error.isConflict || error.isNotFound)) {
-            void workshopsQuery.refetch()
-          }
-        },
-      },
-    )
+    registerMutation.mutate({ workshopId }, actionCallbacks(workshopId))
   }
 
   const handleCancel = (workshopId: number, registrationId: number) => {
@@ -149,26 +137,7 @@ export function WorkshopRegistrationPage() {
     setFeedback(null)
     cancelMutation.mutate(
       { workshopId, registrationId },
-      {
-        onSuccess: (result) => {
-          setFeedback({
-            tone: 'success',
-            workshopId,
-            message: result.message,
-          })
-        },
-        onError: (error) => {
-          setFeedback({
-            tone: 'error',
-            workshopId,
-            message: describeError(error, t),
-          })
-
-          if (isApiError(error) && (error.isConflict || error.isNotFound)) {
-            void workshopsQuery.refetch()
-          }
-        },
-      },
+      actionCallbacks(workshopId),
     )
   }
 
