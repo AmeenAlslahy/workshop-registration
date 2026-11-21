@@ -172,7 +172,7 @@ src/
 │   ├── features/
 │   │   ├── participants/         ParticipantSelector
 │   │   └── workshops/            WorkshopGrid, WorkshopCard, SessionSummary
-│   ├── components/               reusable design system
+│   ├── components/               reusable design system, one folder per component
 │   ├── i18n/                     messages, context, provider, error copy
 │   └── theme/                    context + provider
 │
@@ -394,6 +394,11 @@ What is not covered automatically:
 - **Context files split from providers.** `i18nContext.ts` and `themeContext.ts` export the
   hooks and context objects, while the provider components live in their own files. This
   keeps React Fast Refresh working without lint warnings.
+- **Direct imports, no barrel files.** Every module imports the file that defines
+  what it needs. A layer-wide `index.ts` re-exported the same components that
+  imported it, which created real import cycles and allowed `presentation` to
+  re-export `domain`. Barrels are reserved for folders that are genuine module
+  boundaries.
 - **No component library.** The UI uses a small set of shared primitives (Button, Badge,
   InlineNotice, CapacityMeter, StatePanel, Skeleton, Spinner, Icon) so every state looks
   consistent and the bundle stays small.
